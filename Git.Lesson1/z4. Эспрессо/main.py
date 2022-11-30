@@ -10,7 +10,6 @@ from PyQt5.QtGui import QPainter, QColor
 import random as r
 
 
-
 class MainForm(QWidget):
     def __init__(self):
         super().__init__()

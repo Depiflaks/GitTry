@@ -1,0 +1,126 @@
+import random
+import pygame.examples.eventlist
+import pygame
+
+N = 30
+delay = 1
+CELL_SIZE = 20
+SIZE = N * CELL_SIZE + CELL_SIZE, N * CELL_SIZE + CELL_SIZE
+X = 10
+Y = 10
+D = 4
+COLORS = [(255, 0, 0), (0, 255, 0), (0, 0, 0)]
+
+
+class Cell:
+    def __init__(self, pos):
+        self.pos = pos
+        self.x, self.y = pos
+        self.color = COLORS[2]
+        self.border = 0
+        self.isAlive = False
+        self.countOfN = 0
+
+    def __str__(self):
+        return f'({self.x}, {self.y})'
+
+
+class Board:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.board = [[Cell((i, j)) for j in range(height)] for i in range(width)]
+        self.x = 10
+        self.y = 10
+        self.cell_size = 30
+
+    def set_vew(self, x, y, size):
+        self.x = x
+        self.y = y
+        self.cell_size = size
+
+    def get_count(self, x, y):
+        c = 0
+        for i in range(y - 1, y + 2):
+            for j in range(x - 1, x + 2):
+                try:
+                    if i < 0 or j < 0:
+                        raise IndexError
+                    if self.board[i][j].isAlive:
+                        c += 1
+                except IndexError:
+                    continue
+        return c - 1
+
+    def recount(self):
+        for i in range(self.height):
+            for j in range(self.width):
+                self.board[j][i].countOfN = self.get_count(j, i)
+
+    def render(self, screen):
+        for i in range(self.height):
+            for j in range(self.width):
+                x = self.x + j * self.cell_size
+                y = self.y + i * self.cell_size
+                size = self.cell_size
+                pygame.draw.rect(screen, self.board[j][i].color, (x, y, size, size))
+                pygame.draw.rect(screen, (255, 255, 255), (x, y, size, size), 1)
+
+    def do_turn(self):
+        self.recount()
+        for i in range(self.height):
+            for j in range(self.width):
+                if self.board[j][i].isAlive:
+                    if self.board[j][i].countOfN not in range(2, 4):
+                        self.board[j][i].isAlive = False
+                else:
+                    if self.board[j][i].countOfN == 3:
+                        self.board[j][i].isAlive = True
+
+
+    def get_cell(self, pos):
+        for i in range(0, self.height):
+            for j in range(0, self.width):
+                if pos[0] in range(self.x + self.cell_size * j, self.x + (j + 1) * self.cell_size):
+                    if pos[1] in range(self.y + self.cell_size * i, self.y + (i + 1) * self.cell_size):
+                        return (j, i)
+        else:
+            return None
+
+    def on_click(self, cell):
+        x, y = cell
+        if self.board[x][y].isAlive:
+            self.board[x][y].color = COLORS[2]
+            self.board[x][y].isAlive = False
+        else:
+            self.board[x][y].color = COLORS[1]
+            self.board[x][y].isAlive = True
+
+    def get_click(self, mouse_pos):
+        self.on_click(self.get_cell(mouse_pos))
+
+
+if __name__ == '__main__':
+    pygame.init()
+    screen = pygame.display.set_mode(SIZE)
+    pygame.display.set_caption('Игра "Жизнь"')
+    runninig = True
+    board = Board(N, N)
+    board.set_vew(X, Y, CELL_SIZE)
+    pygame.examples.eventlist.main()
+    clock = pygame.time.Clock()
+    Pause = True
+    while runninig:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                runninig = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                board.get_click(event.pos)
+            if event.type == pygame.KEYDOWN:
+                if event.key == 32:
+                    Pause = True if Pause == False else False
+        screen.fill((0, 0, 0))
+        board.render(screen)
+        pygame.display.flip()
+        clock.tick(1 // delay)
+    pygame.quit()
